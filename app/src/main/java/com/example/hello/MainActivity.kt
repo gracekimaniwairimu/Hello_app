@@ -6,6 +6,9 @@ import android.os.Bundle
 import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_main.*
 import okhttp3.*
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class MainActivity : AppCompatActivity() {
 
@@ -31,11 +34,11 @@ class MainActivity : AppCompatActivity() {
 
 
     fun registerUser(requestBody: RequestBody) {
-        var apiClient = ApiClient.buildService(ApiInterface::class.java)
+        var apiClient= ApiClient.buildService(ApiInterface::class.java)
         var registrationCall = apiClient.registerStudent(requestBody)
         registrationCall.enqueue(object : Callback<RegistrationResponse> {
             override fun onFailure(call: Call<RegistrationResponse>, t: Throwable) {
-                Toast.makeText(baseContext, t.message, Toast.LENGTH_LONG).show()
+                Toast.makeText(baseContext, t.message, Toast.LENGTH_SHORT).show()
             }
 
             override fun onResponse(
@@ -55,6 +58,12 @@ class MainActivity : AppCompatActivity() {
     }
 
 }
+
+
+
+
+
+
 
 
 
