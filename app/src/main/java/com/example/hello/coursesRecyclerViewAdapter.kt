@@ -27,6 +27,6 @@ RecyclerView.Adapter<CoursesRecyclerViewAdapter.NamesViewHolder>() {
     class NamesViewHolder(val rowView: View) : RecyclerView.ViewHolder(rowView)
 }
 
-{
+}
 
 }
