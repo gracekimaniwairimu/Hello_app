@@ -1,5 +1,6 @@
-package com.example.hello
+package models
 
+import com.example.hello.Student
 import com.google.gson.annotations.SerializedName
 
 data class LoginResponse (

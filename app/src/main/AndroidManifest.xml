@@ -3,17 +3,19 @@
     package="com.example.hello">
 
     <application
+        android:name="HelloApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".SplashActivity"></activity>
+        <activity android:name="Activities.Splash2Activity"></activity>
+        <activity android:name=".SplashActivity" />
         <activity android:name=".CourseActivity" />
-        <activity android:name=".CoursesActivity" />
-        <activity android:name=".RegistrationActivity" />
-        <activity android:name=".MainActivity">
+        <activity android:name="Activities.CoursesActivity" />
+        <activity android:name="Activities.RegistrationActivity" />
+        <activity android:name="Activities.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

@@ -1,10 +1,14 @@
-package com.example.hello
+package Activities
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
+import com.example.hello.ApiClient
+import com.example.hello.ApiInterface
+import com.example.hello.R
 import kotlinx.android.synthetic.main.activity_registration.*
+import models.RegistrationResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Call
@@ -40,7 +44,8 @@ class RegistrationActivity : AppCompatActivity() {
 
 
     fun registerUser(requestBody: RequestBody) {
-        var apiClient= ApiClient.buildService(ApiInterface::class.java)
+        var apiClient=
+            ApiClient.buildService(ApiInterface::class.java)
         var registrationCall = apiClient.registerStudent(requestBody)
         registrationCall.enqueue(object : Callback<RegistrationResponse> {
             override fun onFailure(call: Call<RegistrationResponse>, t: Throwable) {
