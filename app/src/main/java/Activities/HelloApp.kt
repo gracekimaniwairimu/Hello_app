@@ -1,4 +1,4 @@
-package com.example.hello
+package Activities
 
 import android.app.Application
 import com.facebook.stetho.Stetho

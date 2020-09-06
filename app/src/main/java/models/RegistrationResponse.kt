@@ -1,5 +1,5 @@
 package models
-import com.example.hello.Student
+import Activities.Student
 import com.google.gson.annotations.SerializedName
 
 data class RegistrationResponse(

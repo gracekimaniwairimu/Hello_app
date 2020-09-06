@@ -1,130 +1,86 @@
 package Activities
 
 
+
+import api.ApiClient
+import api.ApiInterface
+
+import android.animation.ObjectAnimator
+import android.content.Intent
+import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.room.Room
-import com.example.hello.ApiClient
-import com.example.hello.ApiInterface
-import com.example.hello.CoursesRecyclerViewAdapter
 import com.example.hello.R
-import data
-import database.HelloDatabase
-import models.CoursesResponse
-import okhttp3.Call
-import okhttp3.Callback
-import okhttp3.Response
-
-class Courses(val course_id: Int, val course_name: String, val course_code: Int, val instructor:String, val description:String)
-//data class Courses(val course_id: Int, val course_name: String, val course_code: Int, val instructor:String, val description:String)
-
-class CoursesActivity : AppCompatActivity() {
-    lateinit var database: HelloDatabase
-}
+import kotlinx.android.synthetic.main.activity_main.*
+import models.LoginResponse
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_courses)
-         database= Room.databaseBuilder(baseContext, HelloDatabase::class.java, name: "hello-db").build()
-        rvCourses.LayoutManager = LinearLayoutManager(baseContext)
-        val coursesRecyclerViewAdapter =
-            CoursesRecyclerViewAdapter(
-                coursesList = listOf(
-                    fetchCourses()
-
-                            Courses (20, "Design", 57, "Jane", "Creativity"
-                ),
-                Courses(
-                    90,
-                    "Kotlin",
-                    49,
-                    "Arie",
-                    "Android Development"
-                ),
-                Courses(65, "Python", 35, "James", "Databases"),
-                Courses(
-                    84,
-                    "Html/Css",
-                    82,
-                    "Jeff",
-                    "Web Development"
-                ),
-                Courses(27, "Javascript", 28, "Lean", "React"),
-                Courses(70, "Navigating", 58, "Grey", "Navigation"),
-                Courses(56, "C++", 40, "Roy", "Electricals"),
-                Courses(
-                    39,
-                    "Product Design",
-                    76,
-                    "Barre",
-                    "Drafting"
-                ),
-                Courses(
-                    69,
-                    "Entreprenuership",
-                    25,
-                    "Kelly Murungi",
-                    "Finance"
-                ),
-                Courses(
-                    50,
-                    "Hardware Electronics",
-                    33,
-                    "Barre Yasin",
-                    "Arduino"
-                )
-    }
-    fun fetchCourses() {
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(baseContext)
-        val accessToken = sharedPreferences.getString("ACCESS_TOKEN_KEY", "")
-
-        val apiClient =
-            ApiClient.buildService(ApiInterface::class.java)
-        val coursesCall = apiClient.getCourses("Bearer " + accessToken).also {
-            it.enqueue(object : Callback<CoursesResponse> {
-                override fun onFailure(call: Call<CoursesResponse>, t: Throwable) {
-                    Toast.makeText(baseContext, t.message, Toast.LENGTH_LONG).show()
-                }
-
-                ))
-                rvCourses.adapter=CoursesRecyclerViewAdapter
-                override fun onResponse(
-                    call: android.telecom.Call<CoursesResponse>,
-                    response: Response<CoursesResponse>
-                ) {
-                    if (response.isSuccessful) {
-                        var courseList = response.body()?.courses as List<Course>
-                        Thread {
-                            corseList.forEach { course ->
-                                database.courseDao().insertCourse(course)
-                            }
-                        } .start()
-                        var coursesAdapter =CoursesAdapter(courseList)
-                        rvCourses.layoutManager = LinearLayoutManager(baseContext)
-                        rvCourses.adapter = coursesAdapter
-                    } else {
-                        Toast.makeText(baseContext, response.errorBody().toString(), Toast.LENGTH_LONG)
-                            .show()
-                    }
-                }
-            })
-            fun fetchCoursesFromDatabase(){
-                    Thread{
-                    var course=database.coursesDao().getALLCourses()
-                        runOnUiThread{
-                            displayCourses(courses)
-                    }.start()
-
-                    }
+        setContentView(R.layout.activity_main)
+        tvRegisterHere.setOnClickListener {
+            val intent= Intent(baseContext, Register::class.java)
         }
-        fun displayCourses(courses: List<Course>){
-            var coursesAdapter=CoursesAdapter(courses)
-            rvCourses.layoutManager=linearLayoutManager(baseContext)
-            rvCourses.adapter=coursesAdapter
+
+        btnLogin.setOnClickListener {
+            var userName=etUsername.text.toString()
+            var password=etPassword.text.toString()
+            if(userName.isBlank() || userName.isEmpty()){
+                etUsername.error="Username  is required"
+            }
+            if(password.isBlank() || password.isEmpty()){
+                etPassword.error="Password is required"
+                Toast.makeText(baseContext, userName, Toast.LENGTH_LONG).show()
+            }
+            progressBar.max=1000
+            val currentProgress=600
+            ObjectAnimator.ofInt(progressBar,"progress",currentProgress)
+                .setDuration(20000)
+                .start()
+            var requestBody = MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("email", userName)
+                .addFormDataPart("password", password)
+                .build()
+            loginStudents(requestBody)
+            Toast.makeText(baseContext, password, Toast.LENGTH_LONG).show()
         }
     }
-
-
-
+    fun loginStudents(requestBody: RequestBody) {
+        val apiClient = ApiClient.buildService(ApiInterface::class.java)
+        val loginCall = apiClient.Student(requestBody)
+        loginCall.enqueue(object : Callback<LoginResponse> {
+            override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
+                Toast.makeText(baseContext, t.message, Toast.LENGTH_LONG).show()
+            }
+            override fun onResponse(
+                call: Call<LoginResponse>,
+                response: Response<LoginResponse>
+            ) {
+                if (response.isSuccessful) {
+                    Toast.makeText(baseContext, response.body()?.message, Toast.LENGTH_LONG)
+                        .show()
+                    var accessToken = response.body()?.accessToken
+                    var sharedPreferences = PreferenceManager.getDefaultSharedPreferences(baseContext)
+                    var editor = sharedPreferences.edit()
+                    editor.putString("ACCESS_TOKEN_KEY", accessToken)
+                    editor.apply()
+                    val intent = Intent(baseContext, Course::class.java)
+                    startActivity(intent)
+                    finish()
+                } else {
+                    Toast.makeText(
+                        baseContext,
+                        response.errorBody().toString(),
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        })
+    }
+}

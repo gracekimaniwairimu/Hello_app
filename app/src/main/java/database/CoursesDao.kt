@@ -1,10 +1,18 @@
 package database
 
+import Activities.Course
+import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 
-interface CoursesDao {
-    @Insert(onConflict=onConflictStrategy.REPLACE)
+@Dao
+interface CourseDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertCourse(course: Course)
-    @Query(value)
+
+    @Query("SELECT * FROM Courses")
+    fun getAllCourses(): List<Course>
 }
+
+

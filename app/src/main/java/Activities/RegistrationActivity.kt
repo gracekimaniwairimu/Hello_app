@@ -4,8 +4,8 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
-import com.example.hello.ApiClient
-import com.example.hello.ApiInterface
+import api.ApiClient
+import api.ApiInterface
 import com.example.hello.R
 import kotlinx.android.synthetic.main.activity_registration.*
 import models.RegistrationResponse

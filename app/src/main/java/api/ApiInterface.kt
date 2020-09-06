@@ -1,4 +1,4 @@
-package com.example.hello
+package api
 
 import models.RegistrationResponse
 import okhttp3.RequestBody
