@@ -2,85 +2,137 @@ package Activities
 
 
 
+import Activitie.CourseItemClickListener
 import api.ApiClient
 import api.ApiInterface
 
 import android.animation.ObjectAnimator
-import android.content.Intent
+
+import kotlinx.android.synthetic.main.activity_main.*
+import models.LoginResponse
+
+import okhttp3.RequestBody
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.widget.Toast
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.room.Room
+
 import com.example.hello.R
-import kotlinx.android.synthetic.main.activity_main.*
-import models.LoginResponse
+import database.HelloDatabase
+import kotlinx.android.synthetic.main.row_course_item.*
+import models.CoursesResponse
 import okhttp3.MultipartBody
-import okhttp3.RequestBody
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-class MainActivity : AppCompatActivity() {
+
+
+class CoursesActivity : AppCompatActivity(), CourseItemClickListener {
+
+    lateinit var database: HelloDatabase
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        tvRegisterHere.setOnClickListener {
-            val intent= Intent(baseContext, Register::class.java)
-        }
+        setContentView(R.layout.activity_course)
 
-        btnLogin.setOnClickListener {
-            var userName=etUsername.text.toString()
-            var password=etPassword.text.toString()
-            if(userName.isBlank() || userName.isEmpty()){
-                etUsername.error="Username  is required"
-            }
-            if(password.isBlank() || password.isEmpty()){
-                etPassword.error="Password is required"
-                Toast.makeText(baseContext, userName, Toast.LENGTH_LONG).show()
-            }
-            progressBar.max=1000
-            val currentProgress=600
-            ObjectAnimator.ofInt(progressBar,"progress",currentProgress)
-                .setDuration(20000)
-                .start()
-            var requestBody = MultipartBody.Builder()
-                .setType(MultipartBody.FORM)
-                .addFormDataPart("email", userName)
-                .addFormDataPart("password", password)
-                .build()
-            loginStudents(requestBody)
-            Toast.makeText(baseContext, password, Toast.LENGTH_LONG).show()
-        }
+        database = Room.databaseBuilder(baseContext, HelloDatabase::class.java, "hello-db").build()
+
+        fetchCourses()
+
+
     }
-    fun loginStudents(requestBody: RequestBody) {
+
+    private fun fetchCourses() {
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(baseContext)
+        val accessToken = sharedPreferences.getString("ACCESS_TOKEN_KEY", "")
+
         val apiClient = ApiClient.buildService(ApiInterface::class.java)
-        val loginCall = apiClient.Student(requestBody)
-        loginCall.enqueue(object : Callback<LoginResponse> {
-            override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
+        val coursesCall = apiClient.getCourses("Bearer $accessToken")
+
+
+        coursesCall.enqueue(object : Callback<CoursesResponse> {
+            override fun onFailure(call: Call<CoursesResponse>, t: Throwable) {
                 Toast.makeText(baseContext, t.message, Toast.LENGTH_LONG).show()
+
+                fetchCoursesFromDatabase()
             }
+
             override fun onResponse(
-                call: Call<LoginResponse>,
-                response: Response<LoginResponse>
+                call: Call<CoursesResponse>,
+                response: Response<CoursesResponse>
             ) {
                 if (response.isSuccessful) {
-                    Toast.makeText(baseContext, response.body()?.message, Toast.LENGTH_LONG)
-                        .show()
-                    var accessToken = response.body()?.accessToken
-                    var sharedPreferences = PreferenceManager.getDefaultSharedPreferences(baseContext)
-                    var editor = sharedPreferences.edit()
-                    editor.putString("ACCESS_TOKEN_KEY", accessToken)
-                    editor.apply()
-                    val intent = Intent(baseContext, Course::class.java)
-                    startActivity(intent)
-                    finish()
+                    var courseList = response.body()?.courses as List<Course>
+                    Thread {
+                        courseList.forEach { course ->
+                            database.courseDao().insertCourse(course)
+                        }
+                    }.start()
+
+                    displayCourses(courseList)
                 } else {
-                    Toast.makeText(
-                        baseContext,
-                        response.errorBody().toString(),
-                        Toast.LENGTH_LONG
-                    ).show()
+                    Toast.makeText(baseContext, response.errorBody().toString(), Toast.LENGTH_LONG)
+                        .show()
                 }
             }
+        })
+    }
+
+    fun fetchCoursesFromDatabase() {
+        Thread {
+            val courses = database.courseDao().getAllCourses()
+
+            runOnUiThread {
+                displayCourses(courses)
+            }
+        }.start()
+    }
+
+    fun displayCourses(courses: List<Course>) {
+        var coursesAdapter = CoursesAdapter(courses, this)
+        rvCourses.layoutManager = LinearLayoutManager(baseContext)
+        rvCourses.adapter = coursesAdapter
+    }
+
+    override fun onItemClick(course: Course) {
+        //obtain student id from shared preferences
+        //courseId = course.courseId
+        //make a post request https://github.com/owuor91/registration-api
+
+
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(baseContext)
+        val accessToken = sharedPreferences.getString("ACCESS_TOKEN_KEY", "")
+        val studentId = sharedPreferences.getString("STUDENT_ID_KEY", "")
+        var courseId = course.courseId
+
+        var requestBody = MultipartBody.Builder()
+            .setType(MultipartBody.FORM)
+            .addFormDataPart("course_id", courseId)
+            .addFormDataPart("student_id", studentId!!)
+            .build()
+
+
+        val apiClient = ApiClient.buildService(ApiInterface::class.java)
+        val coursesCall = apiClient.RegistrationActivity(requestBody, "Bearer $accessToken")
+
+
+        coursesCall.enqueue(object : Callback<RegistrationActivity> {
+            override fun onFailure(call: Call<RegistrationActivity>, t: Throwable) {
+                TODO("Not yet implemented")
+            }
+
+            override fun onResponse(
+                call: Call<RegistrationActivity>,
+                response: Response<RegistrationActivity>
+            ) {
+                if (response.isSuccessful) {
+                    Toast.makeText(this@CoursesActivity, "Registered", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+
         })
     }
 }
